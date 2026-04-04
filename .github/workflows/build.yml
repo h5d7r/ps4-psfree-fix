@@ -42,6 +42,8 @@ jobs:
 
       - name: Build project
         run: |
+          sed -i '1i #define UNUSED(x) (void)(x)' source/main.c
+          sed -i 's/source\/main\.c/$(wildcard source\/*.c)/g' Makefile
           sed -i 's/-fuse-ld=gold//g' Makefile
           export PS4SDK=$HOME/PS4SDK
           make
