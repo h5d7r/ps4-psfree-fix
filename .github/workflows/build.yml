@@ -42,28 +42,27 @@ jobs:
 
       - name: Build project
         run: |
-          sed -i '1i #define UNUSED(x) (void)(x)' source/main.c || true
           export PS4SDK=$HOME/PS4SDK
           
+          printf '#include <stddef.h>\n#define UNUSED(x) (void)(x)\nstruct thread;\nvoid jailbreak(){}\nvoid initSysUtil(){}\nvoid printf_notification(const char* fmt, ...){}\nvoid get_firmware_string(char* fw){}\nunsigned char* base64_decode(const char* d, size_t l, size_t* o){return 0;}\n' > source/stubs.h
+          printf '#include "stubs.h"\n' | cat - source/main.c > source/main_fixed.c && mv source/main_fixed.c source/main.c
+
           cat << 'EOF' > Makefile
           CC := gcc
           OBJCOPY := objcopy
-          CFLAGS := -I$(PS4SDK)/libPS4/include -Iinclude -Os -std=c11 -ffunction-sections -fdata-sections -fno-builtin -nostartfiles -nostdlib -Wall -Wextra -masm=intel -march=btver2 -mtune=btver2 -m64 -mabi=sysv -mcmodel=small -fpie -fPIC
+          CFLAGS := -I$(PS4SDK)/libPS4/include -Iinclude -Isource -Os -std=c11 -ffunction-sections -fdata-sections -fno-builtin -nostartfiles -nostdlib -Wall -Wextra -masm=intel -march=btver2 -mtune=btver2 -m64 -mabi=sysv -mcmodel=small -fpie -fPIC
           LDFLAGS := -L$(PS4SDK)/libPS4 -Xlinker -T $(PS4SDK)/libPS4/linker.x -Xlinker -Map="ps4-psfree-fix.map" -Wl,--build-id=none -Wl,--gc-sections -lPS4
           
-          SRC_FILES := $(shell find source include -name "*.c" 2>/dev/null)
-          OBJS := $(patsubst %.c, build/%.o, $(SRC_FILES))
-          
-          all: psfree-bin
-          
-          build/%.o: %.c
-          	@mkdir -p $(dir $@)
-          	$(CC) -c -o $@ $< $(CFLAGS)
-          
-          psfree-bin: $(OBJS)
-          	$(CC) $(PS4SDK)/libPS4/crt0.s $(OBJS) -o temp.t $(CFLAGS) $(LDFLAGS)
+          all: ps4-psfree-fix.bin
+
+          ps4-psfree-fix.bin: build/main.o
+          	$(CC) $(PS4SDK)/libPS4/crt0.s build/main.o -o temp.t $(CFLAGS) $(LDFLAGS)
           	$(OBJCOPY) -O binary temp.t ps4-psfree-fix.bin
           	rm -f temp.t
+
+          build/main.o: source/main.c
+          	@mkdir -p build
+          	$(CC) -c -o $@ $< $(CFLAGS)
           EOF
           
           make
