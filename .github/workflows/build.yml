@@ -42,10 +42,30 @@ jobs:
 
       - name: Build project
         run: |
-          sed -i '1i #define UNUSED(x) (void)(x)' source/main.c
-          sed -i 's/source\/main\.c/$(wildcard source\/*.c)/g' Makefile
-          sed -i 's/-fuse-ld=gold//g' Makefile
+          sed -i '1i #define UNUSED(x) (void)(x)' source/main.c || true
           export PS4SDK=$HOME/PS4SDK
+          
+          cat << 'EOF' > Makefile
+          CC := gcc
+          OBJCOPY := objcopy
+          CFLAGS := -I$(PS4SDK)/libPS4/include -Iinclude -Os -std=c11 -ffunction-sections -fdata-sections -fno-builtin -nostartfiles -nostdlib -Wall -Wextra -masm=intel -march=btver2 -mtune=btver2 -m64 -mabi=sysv -mcmodel=small -fpie -fPIC
+          LDFLAGS := -L$(PS4SDK)/libPS4 -Xlinker -T $(PS4SDK)/libPS4/linker.x -Xlinker -Map="ps4-psfree-fix.map" -Wl,--build-id=none -Wl,--gc-sections -lPS4
+          
+          SRC_FILES := $(shell find source include -name "*.c" 2>/dev/null)
+          OBJS := $(patsubst %.c, build/%.o, $(SRC_FILES))
+          
+          all: psfree-bin
+          
+          build/%.o: %.c
+          	@mkdir -p $(dir $@)
+          	$(CC) -c -o $@ $< $(CFLAGS)
+          
+          psfree-bin: $(OBJS)
+          	$(CC) $(PS4SDK)/libPS4/crt0.s $(OBJS) -o temp.t $(CFLAGS) $(LDFLAGS)
+          	$(OBJCOPY) -O binary temp.t ps4-psfree-fix.bin
+          	rm -f temp.t
+          EOF
+          
           make
 
       - name: Upload BIN artifact
