@@ -33,8 +33,7 @@ jobs:
 
       - name: Patch syscall.s section directive
         run: |
-          sed -i 's/\.section __TEXT,__text,regular,pure_instructions/.section .text/' $HOME/PS4SDK/libPS4/source/syscall.s
-          sed -i 's/\.section __TEXT,__text/.section .text/' $HOME/PS4SDK/libPS4/source/syscall.s
+          sed -i 's/\.section \.sc_rop,"wb"/.section .sc_rop,"w"/' $HOME/PS4SDK/libPS4/source/syscall.s
 
       - name: Build libPS4
         run: |
