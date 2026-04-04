@@ -18,21 +18,28 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y binutils-gold make git clang lld
+          sudo apt-get install -y binutils-gold make git gcc
 
       - name: Clone libPS4
         run: |
           git clone https://github.com/idc/ps4-payload-sdk.git $HOME/PS4SDK
 
+      - name: Patch libPS4 types conflict
+        run: |
+          sed -i 's/typedef uint32_t __dev_t;/\/\/ typedef uint32_t __dev_t;/' $HOME/PS4SDK/libPS4/include/types.h
+          sed -i 's/typedef uint32_t __uid_t;/\/\/ typedef uint32_t __uid_t;/' $HOME/PS4SDK/libPS4/include/types.h
+          sed -i 's/typedef uint32_t __gid_t;/\/\/ typedef uint32_t __gid_t;/' $HOME/PS4SDK/libPS4/include/types.h
+          sed -i 's/typedef int32_t __pid_t;/\/\/ typedef int32_t __pid_t;/' $HOME/PS4SDK/libPS4/include/types.h
+
       - name: Build libPS4
         run: |
           cd $HOME/PS4SDK/libPS4
-          make CC=clang CFLAGS="-target x86_64-pc-none-elf -ffreestanding -nostdlib -nostdinc -Iinclude -O2 -std=c11 -masm=intel -march=btver2 -mtune=btver2 -m64 -mabi=sysv -mcmodel=large"
+          make
 
       - name: Build project
         run: |
           export PS4SDK=$HOME/PS4SDK
-          make CC=clang
+          make
 
       - name: Upload BIN artifact
         uses: actions/upload-artifact@v4
