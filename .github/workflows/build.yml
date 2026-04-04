@@ -15,26 +15,12 @@ jobs:
         with:
           ref: patch-2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build project
-        run: npm run build
-
-      - name: Package output as BIN
-        run: |
-          mkdir -p dist_bin
-          find dist -type f | sort > dist_bin/file_list.txt
-          tar -cf dist_bin/psfree.bin -C dist .
+      - name: Package files as BIN
+        run: tar -cf psfree.bin --exclude='.git' --exclude='.github' .
 
       - name: Upload BIN artifact
         uses: actions/upload-artifact@v4
         with:
           name: psfree-bin
-          path: dist_bin/psfree.bin
+          path: psfree.bin
           retention-days: 30
