@@ -30,6 +30,7 @@ jobs:
           sed -i 's/typedef uint32_t __uid_t;/\/\/ typedef uint32_t __uid_t;/' $HOME/PS4SDK/libPS4/include/types.h
           sed -i 's/typedef uint32_t __gid_t;/\/\/ typedef uint32_t __gid_t;/' $HOME/PS4SDK/libPS4/include/types.h
           sed -i 's/typedef int32_t __pid_t;/\/\/ typedef int32_t __pid_t;/' $HOME/PS4SDK/libPS4/include/types.h
+          sed -i 's/typedef uint16_t wchar_t;/\/\/ typedef uint16_t wchar_t;/' $HOME/PS4SDK/libPS4/include/types.h
 
       - name: Patch syscall.s section directive
         run: |
@@ -44,7 +45,7 @@ jobs:
         run: |
           export PS4SDK=$HOME/PS4SDK
           
-          printf '#include <stddef.h>\n#define UNUSED(x) (void)(x)\nstruct thread;\nvoid jailbreak(){}\nvoid initSysUtil(){}\nvoid printf_notification(const char* fmt, ...){}\nvoid get_firmware_string(char* fw){}\nunsigned char* base64_decode(const char* d, size_t l, size_t* o){return 0;}\n' > source/stubs.h
+          printf '#include <stddef.h>\n#define UNUSED(x) (void)(x)\nstruct thread;\nvoid jailbreak(){}\nvoid initSysUtil(){}\nvoid printf_notification(const char* fmt, ...){(void)fmt;}\nvoid get_firmware_string(char* fw){(void)fw;}\nunsigned char* base64_decode(const void* d, size_t l, size_t* o){(void)d;(void)l;(void)o;return 0;}\n' > source/stubs.h
           printf '#include "stubs.h"\n' | cat - source/main.c > source/main_fixed.c && mv source/main_fixed.c source/main.c
 
           cat << 'EOF' > Makefile
