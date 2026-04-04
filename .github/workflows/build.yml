@@ -18,18 +18,21 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc binutils-gold make git
+          sudo apt-get install -y binutils-gold make git clang lld
 
       - name: Clone libPS4
         run: |
           git clone https://github.com/idc/ps4-payload-sdk.git $HOME/PS4SDK
-          cd $HOME/PS4SDK/libPS4
-          make
 
-      - name: Build
+      - name: Build libPS4
+        run: |
+          cd $HOME/PS4SDK/libPS4
+          make CC=clang CFLAGS="-target x86_64-pc-none-elf -ffreestanding -nostdlib -nostdinc -Iinclude -O2 -std=c11 -masm=intel -march=btver2 -mtune=btver2 -m64 -mabi=sysv -mcmodel=large"
+
+      - name: Build project
         run: |
           export PS4SDK=$HOME/PS4SDK
-          make
+          make CC=clang
 
       - name: Upload BIN artifact
         uses: actions/upload-artifact@v4
