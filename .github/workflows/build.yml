@@ -15,12 +15,25 @@ jobs:
         with:
           ref: patch-2
 
-      - name: Package files as BIN
-        run: tar -cf psfree.bin --exclude='.git' --exclude='.github' .
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc binutils-gold make git
+
+      - name: Clone libPS4
+        run: |
+          git clone https://github.com/idc/ps4-payload-sdk.git $HOME/PS4SDK
+          cd $HOME/PS4SDK/libPS4
+          make
+
+      - name: Build
+        run: |
+          export PS4SDK=$HOME/PS4SDK
+          make
 
       - name: Upload BIN artifact
         uses: actions/upload-artifact@v4
         with:
           name: psfree-bin
-          path: psfree.bin
+          path: "*.bin"
           retention-days: 30
