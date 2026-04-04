@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y binutils-gold make git gcc
+          sudo apt-get install -y binutils binutils-gold make git gcc
 
       - name: Clone libPS4
         run: |
@@ -30,6 +30,11 @@ jobs:
           sed -i 's/typedef uint32_t __uid_t;/\/\/ typedef uint32_t __uid_t;/' $HOME/PS4SDK/libPS4/include/types.h
           sed -i 's/typedef uint32_t __gid_t;/\/\/ typedef uint32_t __gid_t;/' $HOME/PS4SDK/libPS4/include/types.h
           sed -i 's/typedef int32_t __pid_t;/\/\/ typedef int32_t __pid_t;/' $HOME/PS4SDK/libPS4/include/types.h
+
+      - name: Patch syscall.s section directive
+        run: |
+          sed -i 's/\.section __TEXT,__text,regular,pure_instructions/.section .text/' $HOME/PS4SDK/libPS4/source/syscall.s
+          sed -i 's/\.section __TEXT,__text/.section .text/' $HOME/PS4SDK/libPS4/source/syscall.s
 
       - name: Build libPS4
         run: |
